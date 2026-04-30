@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LK-Minecraft-mtr</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+<div class="relative z-10 min-h-screen flex flex-col">
+    <!-- 导航栏 -->
+    <nav class="bg-white shadow-md">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-red-600">LK-Minecraft-mtr</h1>
+                <p class="text-sm text-gray-600" data-lang="subtitle">LK の世界へ足を踏み入れよう</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <!-- 语言选择 -->
+                <div class="relative">
+                    <button id="langBtn" class="text-sm bg-gray-200 px-2 py-1 rounded flex items-center gap-1">
+                        <i class="fa fa-globe"></i>
+                        <span data-lang="language">言語</span>
+                    </button>
+                    <div id="langMenu" class="hidden absolute right-0 mt-1 bg-white border rounded shadow-lg z-50">
+                        <button onclick="changeLanguage('ja')" class="block w-full text-left px-3 py-2 hover:bg-gray-100" data-lang="japanese">日本語</button>
+                        <button onclick="changeLanguage('zh')" class="block w-full text-left px-3 py-2 hover:bg-gray-100" data-lang="chinese">中文</button>
+                        <button onclick="changeLanguage('en')" class="block w-full text-left px-3 py-2 hover:bg-gray-100" data-lang="english">English</button>
+                    </div>
+                </div>
+                
+                <div id="userInfo" class="hidden items-center gap-2">
+                    <span id="showEmail"></span>
+                    <button id="menuBtn" class="text-sm bg-gray-200 px-2 py-1 rounded" data-lang="menu">メニュー</button>
+                </div>
+                <button id="loginShowBtn" class="bg-blue-600 text-white px-4 py-1 rounded" data-lang="login_register">ログイン/登録</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容 -->
+    <main class="flex-grow container mx-auto px-4 py-6">
+        <!-- 登录注册弹窗 -->
+        <div id="authModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div class="bg-white w-full max-w-md p-6 rounded-lg relative">
+                <button id="closeModal" class="absolute right-3 top-3 text-xl">×</button>
+                
+                <div class="flex border-b mb-4">
+                    <button id="toLogin" class="py-2 px-4 font-medium border-b-2 border-blue-600 text-blue-600" data-lang="login">ログイン</button>
+                    <button id="toRegister" class="py-2 px-4 font-medium text-gray-400" data-lang="register">登録</button>
+                </div>
+
+                <div id="msg" class="hidden p-2 rounded mb-3 text-sm"></div>
+
+                <!-- 登录 -->
+                <form id="loginForm" class="space-y-3">
+                    <input type="email" id="loginMail" placeholder="メールアドレス" required class="w-full border p-2 rounded" data-placeholder-lang="email_placeholder">
+                    <input type="password" id="loginPwd" placeholder="パスワード" required class="w-full border p-2 rounded" data-placeholder-lang="password_placeholder">
+                    <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded" data-lang="login">ログイン</button>
+                </form>
+
+                <!-- 注册 -->
+                <form id="registerForm" class="hidden space-y-3">
+                    <input type="email" id="regMail" placeholder="メールアドレス" required class="w-full border p-2 rounded" data-placeholder-lang="email_placeholder">
+                    <input type="password" id="regPwd" placeholder="パスワード(6文字以上)" minlength="6" required class="w-full border p-2 rounded" data-placeholder-lang="password_placeholder_register">
+                    <input type="password" id="regPwd2" placeholder="パスワード確認" required class="w-full border p-2 rounded" data-placeholder-lang="confirm_password_placeholder">
+                    <button type="submit" class="w-full bg-green-600 text-white p-2 rounded" data-lang="register">登録</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 菜单弹窗（注销） -->
+        <div id="deleteModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div class="bg-white w-full max-w-sm p-6 rounded-lg">
+                <h2 class="text-lg font-bold text-red-600 mb-3" data-lang="delete_account">アカウント削除</h2>
+                <p class="mb-3 text-sm" data-lang="delete_warning">削除するとデータは完全に消えます。</p>
+                <input type="email" id="delMail" placeholder="メールアドレス確認" class="w-full border p-2 rounded mb-3" data-placeholder-lang="confirm_email_placeholder">
+                <div class="flex gap-2">
+                    <button id="cancelDel" class="flex-1 bg-gray-300 p-2 rounded" data-lang="cancel">キャンセル</button>
+                    <button id="confirmDel" class="flex-1 bg-red-600 text-white p-2 rounded" data-lang="confirm_delete">削除実行</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主页 -->
+        <div id="homePage" class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-bold mb-4" data-lang="home">ホーム</h2>
+            <p data-lang="welcome_message">LK-Minecraft-mtr 鉄道管理システム</p>
+        </div>
+
+        <!-- 铁路公司管理页面 -->
+        <div id="companyPage" class="hidden">
+            <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold" data-lang="my_companies">我的铁路公司</h2>
+                    <button onclick="window.location.href='standalone_company_routes.html'" class="bg-green-600 text-white px-4 py-2 rounded" data-lang="add_company">添加公司</button>
+                </div>
+                <div id="companyMsg" class="hidden p-2 rounded mb-3 text-sm"></div>
+                <div id="companyList" class="space-y-3">
+                    <!-- 公司列表将在这里动态生成 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 铁路线路管理页面 -->
+        <div id="routePage" class="hidden">
+            <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold" data-lang="my_routes">我的铁路线路</h2>
+                    <button id="addRouteBtn" class="bg-green-600 text-white px-4 py-2 rounded" data-lang="add_route">添加线路</button>
+                </div>
+                <div id="routeMsg" class="hidden p-2 rounded mb-3 text-sm"></div>
+                <div id="routeList" class="space-y-3">
+                    <!-- 线路列表将在这里动态生成 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 添加/编辑铁路公司弹窗 -->
+        <div id="companyModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div class="bg-white w-full max-w-lg p-6 rounded-lg relative">
+                <button id="closeCompanyModal" class="absolute right-3 top-3 text-xl">×</button>
+                <h3 id="companyModalTitle" class="text-lg font-bold mb-4" data-lang="add_company">添加铁路公司</h3>
+                
+                <form id="companyForm" class="space-y-4">
+                    <input type="hidden" id="companyId">
+                    <div>
+                        <label class="block text-sm font-medium mb-1" data-lang="company_name">公司名称</label>
+                        <input type="text" id="companyName" required class="w-full border p-2 rounded" data-placeholder-lang="company_name_placeholder">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1" data-lang="company_code">公司代码</label>
+                        <input type="text" id="companyCode" required class="w-full border p-2 rounded" data-placeholder-lang="company_code_placeholder">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1" data-lang="company_color">公司颜色</label>
+                        <input type="color" id="companyColor" required class="w-full h-10 border rounded cursor-pointer">
+                    </div>
+                    <div class="flex gap-2">
+                        <button type="button" id="cancelCompany" class="flex-1 bg-gray-300 p-2 rounded" data-lang="cancel">取消</button>
+                        <button type="submit" class="flex-1 bg-blue-600 text-white p-2 rounded" data-lang="save">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 添加/编辑铁路线路弹窗 -->
+        <div id="routeModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div class="bg-white w-full max-w-lg p-6 rounded-lg relative">
+                <button id="closeRouteModal" class="absolute right-3 top-3 text-xl">×</button>
+                <h3 id="routeModalTitle" class="text-lg font-bold mb-4" data-lang="add_route">添加铁路线路</h3>
+                
+                <form id="routeForm" class="space-y-4">
+                    <input type="hidden" id="routeId">
+                    <div>
+                        <label class="block text-sm font-medium mb-1" data-lang="route_company">所属公司</label>
+                        <select id="routeCompany" required class="w-full border p-2 rounded">
+                            <option value="" data-lang="select_company">请选择公司</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1" data-lang="route_name">线路名称</label>
+                        <input type="text" id="routeName" required class="w-full border p-2 rounded" data-placeholder-lang="route_name_placeholder">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1" data-lang="route_code">线路代码</label>
+                        <input type="text" id="routeCode" required class="w-full border p-2 rounded" data-placeholder-lang="route_code_placeholder">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-sm font-medium mb-1" data-lang="route_start">起点</label>
+                            <input type="text" id="routeStart" required class="w-full border p-2 rounded" data-placeholder-lang="route_start_placeholder">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1" data-lang="route_end">终点</label>
+                            <input type="text" id="routeEnd" required class="w-full border p-2 rounded" data-placeholder-lang="route_end_placeholder">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1" data-lang="route_description">线路描述</label>
+                        <textarea id="routeDescription" rows="3" class="w-full border p-2 rounded" data-placeholder-lang="route_description_placeholder"></textarea>
+                    </div>
+                    <div class="flex gap-2">
+                        <button type="button" id="cancelRoute" class="flex-1 bg-gray-300 p-2 rounded" data-lang="cancel">取消</button>
+                        <button type="submit" class="flex-1 bg-blue-600 text-white p-2 rounded" data-lang="save">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+    
+    <!-- 免责声明 -->
+    <footer class="bg-gray-200 py-2 text-center text-xs text-gray-600">
+        <p>このアプリケーションはフィクションであり、実際の鉄道会社とは一切関係ありません。</p>
+        <p>This application is fictional and has no relation to real railway companies.</p>
+        <p>本应用为虚构内容，与现实中的铁路公司无任何关系。</p>
+    </footer>
+</div>
+
+<script>
+// 多语言支持
+const translations = {
+    ja: {
+        subtitle: "LK の世界へ足を踏み入れよう",
+        language: "言語",
+        japanese: "日本語",
+        chinese: "中文",
+        english: "English",
+        menu: "メニュー",
+        login_register: "ログイン/登録",
+        login: "ログイン",
+        register: "登録",
+        email_placeholder: "メールアドレス",
+        password_placeholder: "パスワード",
+        password_placeholder_register: "パスワード(6文字以上)",
+        confirm_password_placeholder: "パスワード確認",
+        delete_account: "アカウント削除",
+        delete_warning: "削除するとデータは完全に消えます。",
+        confirm_email_placeholder: "メールアドレス確認",
+        cancel: "キャンセル",
+        confirm_delete: "削除実行",
+        home: "ホーム",
+        welcome_message: "LK-Minecraft-mtr 鉄道管理システム",
+        password_match_error: "パスワードが一致しません",
+        already_registered_error: "既に登録されています",
+        registration_success: "登録完了！ログインしてください",
+        login_error: "メールまたはパスワードが違います",
+        email_confirm_error: "メールアドレスが正しくありません",
+        account_deleted: "アカウントを削除しました",
+        my_companies: "私の鉄道会社",
+        add_company: "会社を追加",
+        company_name: "会社名",
+        company_code: "会社コード",
+        company_color: "会社色",
+        company_name_placeholder: "例: 中央線",
+        company_code_placeholder: "例: JR",
+        save: "保存",
+        edit_company: "会社を編集",
+        delete_company: "会社を削除",
+        company_added: "会社が追加されました",
+        company_updated: "会社が更新されました",
+        company_deleted: "会社が削除されました",
+        no_companies: "まだ会社がありません"
+    },
+    zh: {
+        subtitle: "欢迎进入LK的世界",
+        language: "语言",
+        japanese: "日语",
+        chinese: "中文",
+        english: "英语",
+        menu: "菜单",
+        login_register: "登录/注册",
+        login: "登录",
+        register: "注册",
+        email_placeholder: "邮箱地址",
+        password_placeholder: "密码",
+        password_placeholder_register: "密码(6位以上)",
+        confirm_password_placeholder: "确认密码",
+        delete_account: "账号删除",
+        delete_warning: "删除后数据将完全消失。",
+        confirm_email_placeholder: "确认邮箱地址",
+        cancel: "取消",
+        confirm_delete: "确认删除",
+        home: "首页",
+        welcome_message: "LK-Minecraft-mtr 铁路管理系统",
+        password_match_error: "密码不一致",
+        already_registered_error: "该邮箱已注册",
+        registration_success: "注册成功！请登录",
+        login_error: "邮箱或密码错误",
+        email_confirm_error: "邮箱地址不正确",
+        account_deleted: "账号已删除",
+        my_companies: "我的铁路公司",
+        add_company: "添加公司",
+        company_name: "公司名称",
+        company_code: "公司代码",
+        company_color: "公司颜色",
+        company_name_placeholder: "例: 中央线",
+        company_code_placeholder: "例: JR",
+        save: "保存",
+        edit_company: "编辑公司",
+        delete_company: "删除公司",
+        company_added: "公司已添加",
+        company_updated: "公司已更新",
+        company_deleted: "公司已删除",
+        no_companies: "还没有公司"
+    },
+    en: {
+        subtitle: "Step into LK's World",
+        language: "Language",
+        japanese: "Japanese",
+        chinese: "Chinese",
+        english: "English",
+        menu: "Menu",
+        login_register: "Login/Register",
+        login: "Login",
+        register: "Register",
+        email_placeholder: "Email Address",
+        password_placeholder: "Password",
+        password_placeholder_register: "Password (6+ chars)",
+        confirm_password_placeholder: "Confirm Password",
+        delete_account: "Delete Account",
+        delete_warning: "Data will be permanently deleted.",
+        confirm_email_placeholder: "Confirm Email",
+        cancel: "Cancel",
+        confirm_delete: "Delete",
+        home: "Home",
+        welcome_message: "LK-Minecraft-mtr Railway Management System",
+        password_match_error: "Passwords do not match",
+        already_registered_error: "Email already registered",
+        registration_success: "Registration successful! Please login",
+        login_error: "Invalid email or password",
+        email_confirm_error: "Email address is incorrect",
+        account_deleted: "Account has been deleted",
+        my_companies: "My Railway Companies",
+        add_company: "Add Company",
+        company_name: "Company Name",
+        company_code: "Company Code",
+        company_color: "Company Color",
+        company_name_placeholder: "e.g., Central Line",
+        company_code_placeholder: "e.g., JR",
+        save: "Save",
+        edit_company: "Edit Company",
+        delete_company: "Delete Company",
+        company_added: "Company added successfully",
+        company_updated: "Company updated successfully",
+        company_deleted: "Company deleted successfully",
+        no_companies: "No companies yet"
+    }
+};
+
+let currentLang = 'ja';
+
+function changeLanguage(lang) {
+    currentLang = lang;
+    document.documentElement.lang = lang;
+    
+    // 更新所有文本内容
+    document.querySelectorAll('[data-lang]').forEach(el => {
+        const key = el.getAttribute('data-lang');
+        if (translations[lang][key]) {
+            el.textContent = translations[lang][key];
+        }
+    });
+    
+    // 更新所有占位符
+    document.querySelectorAll('[data-placeholder-lang]').forEach(el => {
+        const key = el.getAttribute('data-placeholder-lang');
+        if (translations[lang][key]) {
+            el.placeholder = translations[lang][key];
+        }
+    });
+    
+    // 隐藏语言菜单
+    document.getElementById('langMenu').classList.add('hidden');
+}
+
+// 存储
+const DB = {
+    getUsers() { 
+        try {
+            return JSON.parse(localStorage.getItem('users')) || [];
+        } catch (e) {
+            console.log('获取用户数据失败:', e);
+            return [];
+        }
+    },
+    saveUsers(users) { 
+        try {
+            localStorage.setItem('users', JSON.stringify(users));
+        } catch (e) {
+            console.log('保存用户数据失败:', e);
+        }
+    },
+    getCurrent() { 
+        try {
+            return JSON.parse(localStorage.getItem('user')) || null;
+        } catch (e) {
+            console.log('获取当前用户失败:', e);
+            return null;
+        }
+    },
+    setCurrent(user) { 
+        try {
+            localStorage.setItem('user', JSON.stringify(user));
+        } catch (e) {
+            console.log('保存当前用户失败:', e);
+        }
+    },
+    clearCurrent() { 
+        localStorage.removeItem('user');
+    },
+    getCompanies() { 
+        try {
+            // 读取旧版本数据
+            const oldCompanies = JSON.parse(localStorage.getItem('companies')) || [];
+            // 读取新版本数据
+            const newCompanies = JSON.parse(localStorage.getItem('mtr_companies')) || [];
+            
+            // 合并两个版本的数据，避免重复
+            const allCompanies = [...oldCompanies];
+            const existingIds = new Set(oldCompanies.map(c => c.id));
+            
+            // 添加新版本中不存在于旧版本的数据
+            newCompanies.forEach(company => {
+                if (company && !existingIds.has(company.id)) {
+                    allCompanies.push(company);
+                }
+            });
+            
+            return allCompanies;
+        } catch (e) {
+            console.log('获取公司数据失败:', e);
+            return [];
+        }
+    },
+    saveCompanies(companies) { 
+        try {
+            // 保存到旧版本存储
+            localStorage.setItem('companies', JSON.stringify(companies));
+            // 同步保存到新版本存储
+            localStorage.setItem('mtr_companies', JSON.stringify(companies));
+        } catch (e) {
+            console.log('保存公司数据失败:', e);
+        }
+    }
+};
+
+// 工具
+const UI = {
+    showMsg(el, textKey, isErr = false) {
+        const m = document.getElementById(el);
+        if (!m) return;
+        
+        m.textContent = translations[currentLang][textKey];
+        m.classList.remove('hidden', 'bg-red-100', 'text-red-600', 'bg-green-100', 'text-green-600');
+        m.classList.add(isErr ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600');
+        m.classList.remove('hidden');
+        setTimeout(() => m.classList.add('hidden'), 3000);
+    }
+};
+
+// 全局变量
+let editingCompanyId = null;
+
+// 渲染公司列表
+function renderCompanyList() {
+    const user = DB.getCurrent();
+    if (!user) return;
+    
+    const companies = DB.getCompanies();
+    const userCompanies = companies.filter(c => c && c.owner === user.email);
+    
+    const listEl = document.getElementById('companyList');
+    if (!listEl) return;
+    
+    console.log('渲染公司列表:', userCompanies.length, '个公司');
+    
+    if (userCompanies.length === 0) {
+        listEl.innerHTML = `<p class="text-gray-500 text-center py-4" data-lang="no_companies">${translations[currentLang]['no_companies']}</p>`;
+        return;
+    }
+    
+    listEl.innerHTML = userCompanies.map(company => `
+        <div class="border rounded-lg p-4 flex justify-between items-center" style="border-left: 4px solid ${company.color}">
+            <div>
+                <h3 class="font-bold">${company.name}</h3>
+                <p class="text-sm text-gray-600">${company.code}</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="editCompany('${company.id}')" class="text-blue-600 hover:text-blue-800" data-lang="edit_company">
+                    <i class="fa fa-edit"></i>
+                </button>
+                <button onclick="deleteCompany('${company.id}')" class="text-red-600 hover:text-red-800" data-lang="delete_company">
+                    <i class="fa fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// 添加公司
+function addCompany() {
+    editingCompanyId = null;
+    document.getElementById('companyModalTitle').textContent = translations[currentLang]['add_company'];
+    document.getElementById('companyForm').reset();
+    document.getElementById('companyColor').value = '#3b82f6';
+    document.getElementById('companyModal').classList.remove('hidden');
+}
+
+// 编辑公司
+function editCompany(id) {
+    const companies = DB.getCompanies();
+    const company = companies.find(c => c.id === id);
+    
+    if (company) {
+        editingCompanyId = id;
+        document.getElementById('companyModalTitle').textContent = translations[currentLang]['edit_company'];
+        document.getElementById('companyId').value = company.id;
+        document.getElementById('companyName').value = company.name;
+        document.getElementById('companyCode').value = company.code;
+        document.getElementById('companyColor').value = company.color;
+        document.getElementById('companyModal').classList.remove('hidden');
+    }
+}
+
+// 删除公司
+function deleteCompany(id) {
+    if (confirm('本当に削除しますか？')) {
+        const companies = DB.getCompanies();
+        const newCompanies = companies.filter(c => c.id !== id);
+        DB.saveCompanies(newCompanies);
+        renderCompanyList();
+        UI.showMsg('companyMsg', 'company_deleted');
+    }
+}
+
+// 切换页面
+function switchPage(page) {
+    document.getElementById('homePage').classList.add('hidden');
+    document.getElementById('companyPage').classList.add('hidden');
+    document.getElementById('routePage').classList.add('hidden');
+    
+    document.getElementById(page + 'Page').classList.remove('hidden');
+    
+    if (page === 'company') {
+        renderCompanyList();
+    }
+}
+
+// 初始化
+document.addEventListener('DOMContentLoaded', function() {
+    // 语言切换
+    document.getElementById('langBtn').addEventListener('click', function() {
+        document.getElementById('langMenu').classList.toggle('hidden');
+    });
+    
+    // 登录注册弹窗
+    document.getElementById('loginShowBtn').addEventListener('click', function() {
+        document.getElementById('authModal').classList.remove('hidden');
+    });
+    
+    document.getElementById('closeModal').addEventListener('click', function() {
+        document.getElementById('authModal').classList.add('hidden');
+    });
+    
+    // 切换登录注册
+    document.getElementById('toLogin').addEventListener('click', function() {
+        document.getElementById('loginForm').classList.remove('hidden');
+        document.getElementById('registerForm').classList.add('hidden');
+        document.getElementById('toLogin').classList.add('border-blue-600', 'text-blue-600');
+        document.getElementById('toLogin').classList.remove('text-gray-400');
+        document.getElementById('toRegister').classList.remove('border-blue-600', 'text-blue-600');
+        document.getElementById('toRegister').classList.add('text-gray-400');
+    });
+    
+    document.getElementById('toRegister').addEventListener('click', function() {
+        document.getElementById('registerForm').classList.remove('hidden');
+        document.getElementById('loginForm').classList.add('hidden');
+        document.getElementById('toRegister').classList.add('border-blue-600', 'text-blue-600');
+        document.getElementById('toRegister').classList.remove('text-gray-400');
+        document.getElementById('toLogin').classList.remove('border-blue-600', 'text-blue-600');
+        document.getElementById('toLogin').classList.add('text-gray-400');
+    });
+    
+    // 注册
+    document.getElementById('registerForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const mail = document.getElementById('regMail').value;
+        const pwd = document.getElementById('regPwd').value;
+        const pwd2 = document.getElementById('regPwd2').value;
+        
+        if (pwd !== pwd2) {
+            UI.showMsg('msg', 'password_match_error', true);
+            return;
+        }
+        
+        const users = DB.getUsers();
+        if (users.find(u => u.password === pwd)) {
+            UI.showMsg('msg', 'password_already_exists_error', true);
+            return;
+        }
+        
+        users.push({ email: mail, password: pwd });
+        DB.saveUsers(users);
+        
+        UI.showMsg('msg', 'registration_success');
+        setTimeout(() => {
+            document.getElementById('authModal').classList.add('hidden');
+        }, 1500);
+    });
+    
+    // 登录
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const mail = document.getElementById('loginMail').value;
+        const pwd = document.getElementById('loginPwd').value;
+        
+        const users = DB.getUsers();
+        const user = users.find(u => u.email === mail && u.password === pwd);
+        
+        if (!user) {
+            UI.showMsg('msg', 'login_error', true);
+            return;
+        }
+        
+        DB.setCurrent({ email: mail });
+        
+        document.getElementById('loginShowBtn').classList.add('hidden');
+        document.getElementById('userInfo').classList.remove('hidden');
+        document.getElementById('showEmail').textContent = mail;
+        
+        document.getElementById('authModal').classList.add('hidden');
+        
+        // 显示公司页面
+        switchPage('company');
+    });
+    
+    // 用户菜单
+    document.getElementById('menuBtn').addEventListener('click', function() {
+        document.getElementById('deleteModal').classList.remove('hidden');
+    });
+    
+    // 删除账号
+    document.getElementById('confirmDel').addEventListener('click', function() {
+        const mail = document.getElementById('delMail').value;
+        const current = DB.getCurrent();
+        
+        if (mail !== current.email) {
+            UI.showMsg('msg', 'email_confirm_error', true);
+            return;
+        }
+        
+        // 删除用户数据
+        const users = DB.getUsers();
+        const newUsers = users.filter(u => u.email !== mail);
+        DB.saveUsers(newUsers);
+        
+        // 删除公司数据
+        const companies = DB.getCompanies();
+        const newCompanies = companies.filter(c => c.owner !== mail);
+        DB.saveCompanies(newCompanies);
+        
+        DB.clearCurrent();
+        
+        document.getElementById('userInfo').classList.add('hidden');
+        document.getElementById('loginShowBtn').classList.remove('hidden');
+        document.getElementById('deleteModal').classList.add('hidden');
+        
+        // 显示主页
+        switchPage('home');
+    });
+    
+    document.getElementById('cancelDel').addEventListener('click', function() {
+        document.getElementById('deleteModal').classList.add('hidden');
+    });
+    
+    // 公司管理 - 确保按钮存在
+    const addCompanyBtn = document.getElementById('addCompanyBtn');
+    if (addCompanyBtn) {
+        addCompanyBtn.addEventListener('click', function() {
+            // 直接跳转到新的铁路公司管理页面
+            window.location.href = 'standalone_company_routes.html';
+        });
+    }
+    
+    // 公司表单提交
+    document.getElementById('companyForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const name = document.getElementById('companyName').value;
+        const code = document.getElementById('companyCode').value;
+        const color = document.getElementById('companyColor').value;
+        
+        const companies = DB.getCompanies();
+        const user = DB.getCurrent();
+        
+        if (editingCompanyId) {
+            // 编辑
+            const company = companies.find(c => c.id === editingCompanyId);
+            if (company) {
+                company.name = name;
+                company.code = code;
+                company.color = color;
+                DB.saveCompanies(companies);
+                UI.showMsg('companyMsg', 'company_updated');
+            }
+        } else {
+            // 添加
+            companies.push({
+                id: Date.now().toString(),
+                name: name,
+                code: code,
+                color: color,
+                owner: user.email
+            });
+            DB.saveCompanies(companies);
+            UI.showMsg('companyMsg', 'company_added');
+        }
+        
+        document.getElementById('companyModal').classList.add('hidden');
+        renderCompanyList();
+    });
+    
+    document.getElementById('closeCompanyModal').addEventListener('click', function() {
+        document.getElementById('companyModal').classList.add('hidden');
+    });
+    
+    document.getElementById('cancelCompany').addEventListener('click', function() {
+        document.getElementById('companyModal').classList.add('hidden');
+    });
+    
+    // 点击外部关闭菜单
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#langBtn') && !e.target.closest('#langMenu')) {
+            document.getElementById('langMenu').classList.add('hidden');
+        }
+    });
+    
+    // 检查登录状态
+    const currentUser = DB.getCurrent();
+    if (currentUser) {
+        document.getElementById('loginShowBtn').classList.add('hidden');
+        document.getElementById('userInfo').classList.remove('hidden');
+        document.getElementById('showEmail').textContent = currentUser.email;
+        
+        switchPage('company');
+    }
+});
+</script>
+</body>
+</html>
